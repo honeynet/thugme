@@ -24,50 +24,49 @@
 
 <body>
 <div class=container-narrow>
-    <div class="row-fluid">
+  <div class="row-fluid">
     <div class="span12">
-        <ul class="nav nav-pills pull-right">
-            <li class="active"><a href="/"><i class="icon-home"></i> Home</a></li>
-            <li><a href="https://github.com/honeynet/thugme"><i class="icon-github"></i> Repository</a></li>
-        </ul>
-        <h1>ThugMe</h1>
+      <ul class="nav nav-pills pull-right">
+        <li class="active"><a href="/"><i class="icon-home"></i> Home</a></li>
+        <li><a href="https://github.com/honeynet/thugme"><i class="icon-github"></i> Repository</a></li>
+      </ul>
+      <h1>ThugMe</h1>
     </div>
+  </div>
+  <hr>
+  <form id="analyze-step1" class="pull-right">
+    <div class="input-append">
+      <input name="url" type="text" class="input-xlarge" placeholder="http://example.com/evil" >
+      <button type="submit" class="btn btn-primary"><i class="icon-screenshot"></i> Analyze</button>
     </div>
-    <hr>
-    <div class=clearfix></div>
-    <div class=navbar>
-        <form class="navbar-form navbar-search pull-right">
-            <input type="text" placeholder="http://example.com/evil…">
-            <button class="btn"><i class=icon-search></i> Search</button>
-            <button class="btn btn-primary" data-toggle="modal" data-target="#analyze-captcha"><i class="icon-plus-sign"></i> Analyze</button>
-      </form>
+  </form>
+  <div id="analysis-results">
+    <h4 >Recent Analysis</h4>
+    <div id="analysis-table">
+      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
+      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
+      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
     </div>
-    <h4>Recent Analysis</h4>
-    
-
     {% block content %}{% endblock %}
-
-    <hr>
-
-    <div class="footer">
-        <p>&copy; <i class="icon-github"></i><a href="https://github.com/honeynet"> Honeynet Project</a> (2013)</p>
+  <hr>
+  </div>
+  <form id="analyze-step2" style="display: none">
+  	<h4>Analyze!</h4>
+    <div class="row-fluid">
+      <div class="span8">
+    	<div id="analyze-recaptcha"><i>Captcha Loading...</i></div>
+      </div>
+      <div class="span4">
+        <button type="submit" class="btn btn-success btn-large" style="margin-top: 40px;"><i class="icon-hand-right"></i> Submit</button>
+      </div>
     </div>
+    <hr>
+  </form>
+  <div class="footer">
+    <p>&copy; <i class="icon-github"></i><a href="https://github.com/honeynet"> Honeynet Project</a> (2013)</p>
+  </div>
 
 </div>
-
-<form id="analyze-captcha" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="analyze-captcha" aria-hidden="true">
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3>Humans FTW!</h3>
-  </div>
-  <div class="modal-body">
-    <!-- TODO: Own Recaptcha API Key, autofocus on open -->
-      <script type="text/javascript" src="http://www.google.com/recaptcha/api/challenge?k=6Lcc58sSAAAAAK2DXVazJPQsmWiOKVZCCmKNWOHP"></script>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-primary put-right">Submit</button>
-    </div>
-</form>
   
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
