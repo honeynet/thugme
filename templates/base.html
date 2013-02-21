@@ -52,12 +52,21 @@
   </div>
   <form id="analyze-step2" style="display: none">
   	<h4>Analyze!</h4>
+    
+    <div id="analyze-step2-captchaerror" class="alert alert-error text-center" style="display:none">
+      <i class="icon-trophy icon-2x pull-left"></i>
+      <span style="line-height: 2em">Achievement unlocked: <b>Incorrect Captcha</b>!</span>
+      <a href="#" class="close" data-dismiss="alert">&times;</a>
+      <div class="clearfix"></div>
+	</div>
+    
+    <input name="url" type="hidden">
     <div class="row-fluid">
       <div class="span8">
     	<div id="analyze-recaptcha"><i>Captcha Loading...</i></div>
       </div>
       <div class="span4">
-        <button type="submit" class="btn btn-success btn-large" style="margin-top: 40px;"><i class="icon-hand-right"></i> Submit</button>
+        <button type="submit" class="btn btn-success btn-large"><i class="icon-hand-right"></i> Submit</button>
       </div>
     </div>
     <hr>

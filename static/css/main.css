@@ -9,3 +9,7 @@ body {
   padding-top: 20px;
   padding-bottom: 40px;
 }
+
+#analyze-step2 button[type=submit] {
+  margin-top: 40px;
+}
