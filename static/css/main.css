@@ -10,6 +10,40 @@ body {
   padding-bottom: 40px;
 }
 
+header h1 a, header h1 a:hover {
+ color: #333; 
+}
+
 #analyze-step2 button[type=submit] {
   margin-top: 40px;
+}
+
+#analyze-step3-share {
+  margin-top: 50px;
+  margin-bottom: 50px; 
+}
+
+#analyze-step3 {
+  margin-bottom: 100px;
+}
+
+input[readonly] { 
+  cursor: text;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+
+
+/* Share Widget */
+.share label {
+  display: inline-block;
+}
+.icon-twitter {
+  color: #4099FF;
+}
+.icon-google-plus-sign {
+  color: #D34836;
 }

@@ -25,11 +25,23 @@ def thugme():
     template = template_env.get_template('index.html')
     return template.render()
 
+@app.route('/analysis/<analysis_id:re:[a-z0-9]+>')
+def show_analysis(analysis_id=None):
+    template = template_env.get_template('index.html')
+    return template.render()
+
 @app.post('/api/search')
 def search():
     return { "request": request.forms.get('url'),
              "results": (({"timestamp":123},{"timestamp":456}) if request.forms.get('url') != "no" else [])
         }
+
+@app.route('/api/analysis/<analysis_id:re:[a-z0-9]+>')
+def show_analysis(analysis_id=None):
+    import random
+    if random.random() > 0.6:
+        return{"complete":True}
+    return {"complete":False,"queue":5}
 
 @app.post('/api/analyze')
 def analyze():
@@ -42,7 +54,7 @@ def analyze():
     if not response.is_valid:
         return {"success": False}
     else:
-        return {"success": True} #return some id, too.
+        return {"success": True, "queue": 6, "id": "wtf"} #return some id, too.
 
 if __name__ == "__main__":
     httpd = make_server('', 8000, app)
