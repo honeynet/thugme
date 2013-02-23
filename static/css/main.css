@@ -18,12 +18,12 @@ header h1 a, header h1 a:hover {
   margin-top: 40px;
 }
 
-#analyze-step3-share {
+.queue .share {
   margin-top: 50px;
   margin-bottom: 50px; 
 }
 
-#analyze-step3 {
+.queue {
   margin-bottom: 100px;
 }
 

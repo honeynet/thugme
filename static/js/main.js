@@ -24,6 +24,7 @@ $(function(){
       analyzeStep3NotifyButton   = $("#analyze-step3-notify"),
       allSteps                   = analysisResults.add(analyzeStep1).add(analyzeStep2).add(analyzeStep3),
       lazyRecaptchaInit          = false;
+  var main = $("#main");
   
   var notifySound = new buzz.sound("/static/sounds/airhorn", {
     formats: [ "ogg", "mp3" ],
@@ -51,6 +52,8 @@ $(function(){
         console.log("FIXME: display results");
         analysisTable.html($("<pre>").text(JSON.stringify(data.results, null, "  ")));
         
+      } else {
+        //analysisTable.html("<div class="alert alert-info">...</div>");
       }
       analyzeStep2.show();
     });
@@ -80,14 +83,20 @@ $(function(){
         analyzeStep2CaptchaErr.slideDown("fast");
         Recaptcha.reload();
       } else {
-        new QueueHandler(data.success ? data : {id:"abc",queue:6}); //FIXME Debug
+        main.children().slideUp().promise().done(function(){
+          $(this).remove();
+        });
+        new QueueHandler(main, data.success ? data : {id:"abc",queue:6}); //FIXME Debug
       }
     });
     return false;
   });
 
-  var ShareWidget = function(element,options){
-  	this.$element = $(element).html(ShareWidget.template(options));
+  var ShareWidget = function(node,options){
+    this.options = $.extend({}, ShareWidget.defaults, options);
+    this.$element = $( $.parseHTML(ShareWidget.template(this.options))[0] );
+    $(node).append(this.$element);
+    
     
     this.$element.on("click",".share-open",function(){
       window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
@@ -100,65 +109,77 @@ $(function(){
       })
       .tooltip();
   };
-  ShareWidget.template = _.template($("#sharetpl").html());
-
+  ShareWidget.template = _.template($.trim($("#sharetpl").html()));
+  ShareWidget.defaults = { text: "Share:"};
   
-  
-  var QueueHandler = function(data){
+  var QueueHandler = function(node,data,options){
     this.id = _.escape(data.id);
+    this.options = $.extend({}, QueueHandler.defaults, options);
+    this.$element = $($.parseHTML(QueueHandler.template(options))[0]);
     
     this.initGui();
+    $(node).append(this.$element);
     
     if(data)
       this.handleStatus(data);
     else
       this.pollStatus();
+    
     this.pollStatusInterval = window.setInterval(this.pollStatus.bind(this),3000);
   };
-  QueueHandler.prototype.initGui = function(){
-  	var url = "/analysis/"+this.id;
-    //hide existing content
-    allSteps.not(analyzeStep3).slideUp();
+  QueueHandler.template = _.template($.trim($("#queuetpl").html()));
+  QueueHandler.defaults = { showSuccessMessage: false };
+  $.extend(QueueHandler.prototype, {
+    initGui: function(){
+  	  var url = "/analysis/"+this.id;
+      //hide existing content
     
-    new ShareWidget("#analyze-step3-share",
-                    {text: "Share analysis:",
-                     url: location.host + url});
+      if(this.options.showSuccessMessage === true)
+        this.$element.find(".alert-success").show();
     
-    analyzeStep3NotifyButton.click(this.notifyClick.bind(this));
+      new ShareWidget(this.$element.find(".share"),
+                      {text: "Share analysis:",
+                       url: location.host + url});
     
-    analyzeStep3.slideDown();
-    replaceState(url);
-  };
-  QueueHandler.prototype.pollStatus = function(){
-    console.log("Poll Status...");
-    $.get("/api/analysis/"+this.id, this.handleStatus.bind(this),"json");
-  };
-  QueueHandler.prototype.handleStatus = function(data){
-    if(data.complete) {
-      window.clearInterval(this.pollStatusInterval);
-      this.notify();
-      //play sound
-      //show results
-    } else {
-      this.setQueueNumber(data.queue);
-    }
-  };
-  QueueHandler.prototype.setQueueNumber = function(no){
-    $(".queue-position").text(no);
-  };
-  QueueHandler.prototype.notify = function(){
-    if(!analyzeStep3NotifyButton.hasClass("active"))
-      return;
-    notifySound.play();
-  }
-  QueueHandler.prototype.notifyClick = function(){
-    //TODO: Add support for HTML5 Notifications API as soon as Chrome supports the new spec
-    // http://www.html5rocks.com/en/tutorials/notifications/quick/
-    console.log("notifyClick",!analyzeStep3NotifyButton.hasClass("active"));
-    if(!analyzeStep3NotifyButton.hasClass("active")) { //activated
+      this.$notifyButton = this.$element.find("button.notify");
+      this.$notifyButton.click(this.notifyClick.bind(this));
+    
+      analyzeStep3.slideDown();
+      notifySound.load();
+      replaceState(url);
+    },
+    pollStatus: function(){
+      console.log("Poll Status for "+this.id+"...");
+      $.get("/api/analysis/"+this.id, this.handleStatus.bind(this),"json");
+    },
+    handleStatus: function(data){
+      if(data.complete) {
+        window.clearInterval(this.pollStatusInterval);
+        this.notify();
+        main.children().slideUp().promise().done(function(){
+          $(this).remove();
+        });
+        console.log("FIXME: Show results");
+        //FIXME: show results
+      } else {
+        this.setQueueNumber(data.queue);
+      }
+    },
+    setQueueNumber: function(no){
+      this.$element.find(".queue-position").text(no);
+    },
+    notify: function(){
+      if(!analyzeStep3NotifyButton.hasClass("active"))
+        return;
       notifySound.play();
-    } else { //deactivated
+    },
+    notifyClick: function(){
+      //TODO: Add support for HTML5 Notifications API as soon as Chrome supports the new spec
+      // http://www.html5rocks.com/en/tutorials/notifications/quick/
+      if(!this.$notifyButton.hasClass("active")) { //activated
+        notifySound.play();
+      } else { //deactivated
+      }
     }
-  };
-  
+  });
 });
