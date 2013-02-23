@@ -33,7 +33,7 @@ def show_analysis(analysis_id=None):
 @app.post('/api/search')
 def search():
     return { "request": request.forms.get('url'),
-             "results": (({"timestamp":123},{"timestamp":456}) if request.forms.get('url') != "no" else [])
+             "results": (({"url":"http:/example.com/foo","timestamp":123},{"url":"http:/example.com/bar","timestamp":456}) if request.forms.get('url') != "no" else [])
         }
 
 @app.route('/api/analysis/<analysis_id:re:[a-z0-9]+>')

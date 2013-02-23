@@ -14,7 +14,7 @@ header h1 a, header h1 a:hover {
  color: #333; 
 }
 
-#analyze-step2 button[type=submit] {
+.submit button[type=submit] {
   margin-top: 40px;
 }
 

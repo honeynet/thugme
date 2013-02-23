@@ -1,29 +1,19 @@
-$(function(){
+/*
   
-  /*
+Analysis UX Flow:
   
-  Analysis UX Flow:
+User enters URL and clicks "Analyze" ->
+Perform search for existing results and show (Re)submit button ->
+Request gets resubmitted, page polls for updates ->
+page notifies user as soon as results are present
   
-  User enters URL and clicks "Analyze" ->
-  Perform search for existing results and show (Re)submit button ->
-  Request gets resubmitted, page polls for updates ->
-  page notifies user as soon as results are present
+*/
   
-  */
-  
-  var analysisResults            = $("#analysis-results"),
+  /*ar analysisResults            = $("#analysis-results"),
       analysisTable              = $("#analysis-table"),
       analyzeStep1               = $("#analyze-step1"),
       analyzeStep1Url            = analyzeStep1.find("input[name=url]"),
-      analyzeStep1ButtonIcon     = analyzeStep1.find("button i"),
-      analyzeStep2               = $("#analyze-step2"),
-      analyzeStep2Url            = analyzeStep2.find("input[name=url]"),
-      analyzeStep2Button         = analyzeStep2.find("button[type=submit]"),
-      analyzeStep2CaptchaErr     = $("#analyze-step2-captchaerror"),
-      analyzeStep3               = $("#analyze-step3"),
-      analyzeStep3NotifyButton   = $("#analyze-step3-notify"),
-      allSteps                   = analysisResults.add(analyzeStep1).add(analyzeStep2).add(analyzeStep3),
-      lazyRecaptchaInit          = false;
+      analyzeStep1ButtonIcon     = analyzeStep1.find("button i");*/
   var main = $("#main");
   
   var notifySound = new buzz.sound("/static/sounds/airhorn", {
@@ -36,106 +26,158 @@ $(function(){
   function replaceState(url){
     history.pushState({}, "", url);
   }
-  
-  analyzeStep1.submit(function(){
-    
-    //Search for existing results
-    analyzeStep1ButtonIcon.addClass("icon-spin");
-    $.post("/api/search", $(this).serialize(), "json").then(function(data){
-      analyzeStep1ButtonIcon.removeClass("icon-spin");
-      
-      var hasResults = (data.results.length > 0);
-      
-      //hide/show analysis table if we have results
-      hasResults ? analysisResults.show("fast") : analysisResults.hide("fast");
-      if(hasResults) {
-        console.log("FIXME: display results");
-        analysisTable.html($("<pre>").text(JSON.stringify(data.results, null, "  ")));
-        
-      } else {
-        //analysisTable.html("<div class="alert alert-info">...</div>");
+
+  var TemplateMixin = {
+    initialize: function(options){
+      this.options = $.extend({}, this.defaults, options);
+      this.render();
+    },
+    render: function(){
+      if(!this._template){
+        console.log("Rendering template",this);
+        var templatesrc = this.template.indexOf("#") == 0 ? $(this.template).html() : this.template;
+        Object.getPrototypeOf(this)._template = _.template($.trim(templatesrc));
       }
-      analyzeStep2.show();
-    });
+      var $e = $($.parseHTML(this._template(this))[0]);
+      if(this.$element)
+        this.$element.replaceWith($e)
+      this.$element = $e;
+      this._attachNodes();
+    },
+    _attachNodes: function(){
+      var self = this;
+      this.$element.find("[data-attach]").each(function(){
+        var $this = $(this);
+        var attr = $this.data("attach");
+        if(attr in self)
+          throw "Cannot attach to attribute: "+attr+" already exists.";
+        self[$this.data("attach")] = $this;
+      });
+    }
+  }
+  
+  var MainView = function(node,options){
+    this.initialize(options);
     
-    //Lazy init Recaptcha
-    if(!lazyRecaptchaInit){
-      $.getScript("http://www.google.com/recaptcha/api/js/recaptcha_ajax.js").then(function(){
+    $(node).append(this.$element);
+    
+    this.analyzeForm.submit(this.search.bind(this));
+  };
+  $.extend(MainView.prototype,TemplateMixin,{
+    template: "#maintpl",
+    defaults: {},
+    search: function(){
+      //Search for existing results
+      this.analyzeButtonIcon.addClass("icon-spin");
+      $.post("/api/search", $(this).serialize(), "json").then((function(data){
+        this.analyzeButtonIcon.removeClass("icon-spin");
+      
+        var hasResults = (data.results.length > 0);
+      
+        //hide/show analysis table if we have results
+        hasResults ? this.analysisTable.show("fast") : this.analysisTable.hide("fast");
+        if(hasResults) {
+          console.log("FIXME: display results");
+          this.analysisTable.html($("<pre>").text(JSON.stringify(data.results, null, "  ")));
+        
+        } else {
+          //analysisTable.html("<div class="alert alert-info">...</div>");
+        }
+        new SubmitHandler(main,{url:this.analyzeUrl.val()});
+      }).bind(this));
+      return false;
+    }
+  });
+  
+  var SubmitHandler = function(node,options){
+    this.initialize(options)
+    
+    this.$element.submit(this.submit.bind(this));
+    
+    this.$element.hide();
+    $(node).append(this.$element);
+    this.$element.fadeIn();
+
+    this.initCaptcha();
+  };
+  $.extend(SubmitHandler.prototype, TemplateMixin, {
+    template: "#submittpl",
+    defaults:  {url:"http://example.com/"},
+    initCaptcha: function(){
+      //Lazy-load Recaptcha
+      
+      var showRecaptcha = (function(){
         Recaptcha.create("6Ld4iQsAAAAAAM3nfX_K0vXaUudl2Gk0lpTF3REf", //FIXME: insert correct key
-                         "analyze-step2-recaptcha", {
+                         this.captcha.get(0), {
                            theme: "white",
                            callback: Recaptcha.focus_response_field
                          });
-      });
-      lazyRecaptchaInit = true;
-    }
-    
-    //copy over url to second form
-    analyzeStep2Url.val(analyzeStep1Url.val());
-    
-    return false;
-  });
-  
-  
-  analyzeStep2.submit(function(){
-    $.post("/api/analyze", $(this).serialize(), "json").then(function(data){
-      if(!data.success && this.data.indexOf("foo") === -1) { //FIXME Debug
-        analyzeStep2CaptchaErr.slideDown("fast");
-        Recaptcha.reload();
+      }).bind(this);
+      
+      if(!window.lazyRecaptchaInit){
+        $.getScript("//www.google.com/recaptcha/api/js/recaptcha_ajax.js").then(showRecaptcha);
+        window.lazyRecaptchaInit = true;
       } else {
-        main.children().slideUp().promise().done(function(){
-          $(this).remove();
-        });
-        new QueueHandler(main, data.success ? data : {id:"abc",queue:6}); //FIXME Debug
+        showRecaptcha();
       }
-    });
-    return false;
+    },
+    submit: function(){
+      $.post("/api/analyze", this.$element.serialize(), "json").then((function(data){
+        if(!data.success && this.$element.serialize().indexOf("foo") === -1) { //FIXME Debug
+          this.captchaError.slideDown("fast");
+          Recaptcha.reload();
+        } else {
+          main.children().slideUp().promise().done(function(){
+            $(this).remove();
+          });
+          new QueueHandler(main, {}, data.success ? data : {id:"abc",queue:6}); //FIXME Debug
+        }
+      }).bind(this));
+      return false;
+    }
   });
 
   var ShareWidget = function(node,options){
-    this.options = $.extend({}, ShareWidget.defaults, options);
-    this.$element = $( $.parseHTML(ShareWidget.template(this.options))[0] );
+    this.initialize(options);
+
     $(node).append(this.$element);
-    
-    
+
     this.$element.on("click",".share-open",function(){
       window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
       return false;
     });
     
-    this.$element.find("input")
+    this.urlCopyInput
       .click(function(){
         $(this).select();
       })
       .tooltip();
   };
-  ShareWidget.template = _.template($.trim($("#sharetpl").html()));
-  ShareWidget.defaults = { text: "Share:"};
+  $.extend(ShareWidget.prototype,TemplateMixin, {
+    template: "#sharetpl",
+    defaults: {text: "Share:", url: "http://example.com"}
+  });
   
-  var QueueHandler = function(node,data,options){
-    this.id = _.escape(data.id);
-    this.options = $.extend({}, QueueHandler.defaults, options);
-    this.$element = $($.parseHTML(QueueHandler.template(options))[0]);
+  var QueueHandler = function(node,options,firstData){
+    this.id = _.escape(firstData.id);
+    this.initialize(options);
     
-    this.initGui();
-    $(node).append(this.$element);
+    this.initGui(node);
     
-    if(data)
-      this.handleStatus(data);
+    
+    if(firstData)
+      this.handleStatus(firstData);
     else
       this.pollStatus();
     
     this.pollStatusInterval = window.setInterval(this.pollStatus.bind(this),3000);
   };
-  QueueHandler.template = _.template($.trim($("#queuetpl").html()));
-  QueueHandler.defaults = { showSuccessMessage: false };
-  $.extend(QueueHandler.prototype, {
-    initGui: function(){
+  $.extend(QueueHandler.prototype, TemplateMixin, {
+    template: "#queuetpl",
+    defaults: { showSuccessMessage: false },
+    initGui: function(node){
   	  var url = "/analysis/"+this.id;
       //hide existing content
-    
-      if(this.options.showSuccessMessage === true)
-        this.$element.find(".alert-success").show();
     
       new ShareWidget(this.$element.find(".share"),
                       {text: "Share analysis:",
@@ -144,7 +186,10 @@ $(function(){
       this.$notifyButton = this.$element.find("button.notify");
       this.$notifyButton.click(this.notifyClick.bind(this));
     
-      analyzeStep3.slideDown();
+      this.$element.hide();
+      $(node).append(this.$element);
+      this.$element.slideDown();
+      
       notifySound.load();
       replaceState(url);
     },
@@ -169,7 +214,7 @@ $(function(){
       this.$element.find(".queue-position").text(no);
     },
     notify: function(){
-      if(!analyzeStep3NotifyButton.hasClass("active"))
+      if(!this.$notifyButton.hasClass("active"))
         return;
       notifySound.play();
     },
@@ -182,4 +227,3 @@ $(function(){
       }
     }
   });
-});

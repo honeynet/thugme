@@ -21,47 +21,55 @@
 </head>
 
 <body>
+
 <div class=container-narrow>
-  <header class="row-fluid">
-    <div class="span12">
-      <ul class="nav nav-pills pull-right">
-        <li class="active"><a href="/"><i class="icon-home"></i> Home</a></li>
-        <li><a href="https://github.com/honeynet/thugme"><i class="icon-github"></i> Repository</a></li>
-      </ul>
-      <h1><a href="/">ThugMe</a></h1>
-    </div>
+  <header>
+    <ul class="nav nav-pills pull-right">
+      <li class="active"><a href="/"><i class="icon-home"></i> Home</a></li>
+      <li><a href="https://github.com/honeynet/thugme"><i class="icon-github"></i> Repository</a></li>
+    </ul>
+    <h1><a href="/">ThugMe</a></h1>
+    <hr>
   </header>
-  <hr>
-  <form id="analyze-step1" class="pull-right">
-    <div class="input-append">
-      <input name="url" type="text" class="input-xlarge" placeholder="http://example.com/evil" >
-      <button type="submit" class="btn btn-primary"><i class="icon-screenshot"></i> Analyze</button>
-    </div>
-  </form>
-  <div id="analysis-results">
-    <h4>Recent Analysis</h4>
-    <div id="analysis-table">
-      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-    </div>
-    {% block content %}{% endblock %}
-  <hr>
+  <div id="main">
   </div>
-  <form id="analyze-step2" class="hide">
+  <footer>
+    <hr>
+    <p>&copy; <i class="icon-github"></i><a href="https://github.com/honeynet"> Honeynet Project</a> (2013)</p>
+  </footer>
+</div>
+
+<script id="maintpl" type="text/template">
+  <div>
+    <form class="analyze pull-right" data-attach="analyzeForm">
+      <div class="input-append">
+        <input name="url" type="text" class="input-xlarge" placeholder="http://example.com/evil" data-attach="analyzeUrl">
+        <button type="submit" class="btn btn-primary"><i class="icon-screenshot" data-attach="analyzeButtonIcon"></i> Analyze</button>
+      </div>
+    </form>
+    <h4>Recent Analysis</h4>
+    <div class="analysis-table" data-attach="analysisTable">
+      Use "foo" for captcha bypass.<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
+      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
+      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
+    </div>
+  </div>
+</script> 
+<script id="submittpl" type="text/template">
+  <form class="submit">
   	<h4>Analyze!</h4>
     
-    <div id="analyze-step2-captchaerror" class="hide alert alert-error text-center">
+    <div data-attach="captchaError" class="alert alert-error text-center hide">
       <i class="icon-legal icon-2x pull-left"></i>
       <span style="line-height: 2em">Humans FTW: <b>Incorrect Captcha</b>!</span>
       <a href="#" class="close" data-dismiss="alert">&times;</a>
-      <div class="clearfix"></div>
+      <div class="clearfix"></div <!-- TODO: Neccessary? -->
 	</div>
     
-    <input name="url" type="hidden">
+    <input name="url" value="<%- options.url %>" type="hidden"/>
     <div class="row-fluid">
       <div class="span8">
-    	<div id="analyze-step2-recaptcha"><i>Captcha Loading...</i></div>
+    	<div data-attach="captcha"><i>Captcha Loading...</i></div>
       </div>
       <div class="span4">
         <button type="submit" class="btn btn-success btn-large"><i class="icon-hand-right"></i> Submit</button>
@@ -69,13 +77,17 @@
     </div>
     <hr>
   </form>
-  <div id="analyze-step3" class="hide">
+</script>
+
+<script id="queuetpl" type="text/template">
+  <div class="queue">
+    <% if (options.showSuccessMessage) { %>
     <div class="alert alert-success hide">
       <i class="icon-trophy icon-2x pull-left"></i>
       <span style="line-height: 2em"><b>Great!</b> Your request is in the queue and will be analyzed soon!</span>
       <a href="#" class="close" data-dismiss="alert">&times;</a>
-	</div>
-    
+    </div>
+    <% } %>
     <div class="queue media">
       <a class="pull-left" href="#">
         <i class="icon-tasks" style="font-size: 42px"></i>
@@ -85,23 +97,19 @@
         Go and grab some coffee, this page refreshes automatically.
       </div>
     </div>
-    <div id="analyze-step3-share"></div>
-    <button id="analyze-step3-notify" data-toggle="button" type="submit" class="btn btn-primary btn-block"><i class="icon-bullhorn"></i> Notify me!</button>
+    <div class=share></div>
+    <button data-toggle="button" type="submit" class="notify btn btn-primary btn-block"><i class="icon-bullhorn"></i> Notify me!</button>
     <div class=clearfix></div>
   </div>
-  <footer>
-    <p>&copy; <i class="icon-github"></i><a href="https://github.com/honeynet"> Honeynet Project</a> (2013)</p>
-  </footer>
-
-</div>
-
+</script>
+  
 <script id="sharetpl" type="text/template">
   <div class="share">
-    <label><i class="icon-share-alt"></i> <%- text %>
-      <a href="https://twitter.com/share?hashtags=thug&url=<%- url %>" class="share-open" target="_blank"><i class="icon-twitter"></i></a>
-      <a href="https://plus.google.com/share?url=<%- url %>" class="share-open" target="_blank"><i class="icon-google-plus-sign"></i></a>
+    <label><i class="icon-share-alt"></i> <%- options.text %>
+      <a href="https://twitter.com/share?hashtags=thug&url=<%- options.url %>" class="share-open" target="_blank"><i class="icon-twitter"></i></a>
+      <a href="https://plus.google.com/share?url=<%- options.url %>" class="share-open" target="_blank"><i class="icon-google-plus-sign"></i></a>
       <br>
-      <input class="input-xlarge" readonly="readonly" type="text" value="<%- url %>" data-toggle="tooltip" data-placement="right" data-trigger="focus" data-original-title="Press CTRL+C to copy" />
+      <input data-attach="urlCopyInput" class="input-xlarge" readonly="readonly" type="text" value="<%- options.url %>" data-toggle="tooltip" data-placement="right" data-trigger="focus" data-original-title="Press CTRL+C to copy" />
     </label>
   </div>
 </script>
@@ -109,10 +117,14 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
 
-  <script src="/static/js/vendor/bootstrap.min.js"></script>
-  <script src="/static/js/vendor/buzz.js"></script>
-  <script src="/static/js/vendor/lodash.custom.js"></script>  
-  <script src="/static/js/main.js"></script>
-
+<script src="/static/js/vendor/bootstrap.min.js"></script>
+<script src="/static/js/vendor/buzz.js"></script>
+<script src="/static/js/vendor/lodash.custom.js"></script>  
+<script src="/static/js/main.js"></script>
+<script type="text/javascript">
+  new MainView(main);
+</script>
+{% block content %}{% endblock %}
+  
 </body>
 </html>
