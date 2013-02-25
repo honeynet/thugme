@@ -8,13 +8,10 @@ Request gets resubmitted, page polls for updates ->
 page notifies user as soon as results are present
   
 */
+(function($){
   
-  /*ar analysisResults            = $("#analysis-results"),
-      analysisTable              = $("#analysis-table"),
-      analyzeStep1               = $("#analyze-step1"),
-      analyzeStep1Url            = analyzeStep1.find("input[name=url]"),
-      analyzeStep1ButtonIcon     = analyzeStep1.find("button i");*/
-  var main = $("#main");
+  var exports = {};
+  window.thugme = exports;
   
   var notifySound = new buzz.sound("/static/sounds/airhorn", {
     formats: [ "ogg", "mp3" ],
@@ -28,13 +25,17 @@ page notifies user as soon as results are present
   }
 
   var TemplateMixin = {
-    initialize: function(options){
+    initialize: function(args){
+      this._initialize.apply(this,args);
+    },
+    _initialize: function(node, options){
+      this.$parentNode = $(node);
       this.options = $.extend({}, this.defaults, options);
       this.render();
     },
     render: function(){
       if(!this._template){
-        console.log("Rendering template",this);
+        console.debug("Rendering template",this);
         var templatesrc = this.template.indexOf("#") == 0 ? $(this.template).html() : this.template;
         Object.getPrototypeOf(this)._template = _.template($.trim(templatesrc));
       }
@@ -45,57 +46,61 @@ page notifies user as soon as results are present
       this._attachNodes();
     },
     _attachNodes: function(){
-      var self = this;
+      
+      var addAttribute = (function(name,value){
+        if(name in this)
+          throw "Cannot attach to attribute: "+name+" already exists.";
+        this[name] = value;
+      }).bind(this);
+      
       this.$element.find("[data-attach]").each(function(){
-        var $this = $(this);
-        var attr = $this.data("attach");
-        if(attr in self)
-          throw "Cannot attach to attribute: "+attr+" already exists.";
-        self[$this.data("attach")] = $this;
+        var attr = $(this).data("attach");
+        addAttribute(attr,this);
+        addAttribute("$"+attr,$(this));
       });
     }
   }
   
-  var MainView = function(node,options){
-    this.initialize(options);
+  var MainView = exports.MainView = function(node,options){
+    this.initialize(arguments);
     
-    $(node).append(this.$element);
+    this.$parentNode.append(this.$element);
     
-    this.analyzeForm.submit(this.search.bind(this));
+    this.$analyzeForm.submit(this.search.bind(this));
   };
   $.extend(MainView.prototype,TemplateMixin,{
     template: "#maintpl",
     defaults: {},
     search: function(){
       //Search for existing results
-      this.analyzeButtonIcon.addClass("icon-spin");
+      this.$analyzeButtonIcon.addClass("icon-spin");
       $.post("/api/search", $(this).serialize(), "json").then((function(data){
-        this.analyzeButtonIcon.removeClass("icon-spin");
+        this.$analyzeButtonIcon.removeClass("icon-spin");
       
         var hasResults = (data.results.length > 0);
       
         //hide/show analysis table if we have results
-        hasResults ? this.analysisTable.show("fast") : this.analysisTable.hide("fast");
+        hasResults ? this.$analysisTable.show("fast") : this.$analysisTable.hide("fast");
         if(hasResults) {
           console.log("FIXME: display results");
-          this.analysisTable.html($("<pre>").text(JSON.stringify(data.results, null, "  ")));
+          this.$analysisTable.html($("<pre>").text(JSON.stringify(data.results, null, "  ")));
         
         } else {
           //analysisTable.html("<div class="alert alert-info">...</div>");
         }
-        new SubmitHandler(main,{url:this.analyzeUrl.val()});
+        new SubmitHandler(this.$parentNode,{url:this.$analyzeUrl.val()});
       }).bind(this));
       return false;
     }
   });
   
   var SubmitHandler = function(node,options){
-    this.initialize(options)
-    
+    this.initialize(arguments);
+
     this.$element.submit(this.submit.bind(this));
     
     this.$element.hide();
-    $(node).append(this.$element);
+    this.$parentNode.append(this.$element);
     this.$element.fadeIn();
 
     this.initCaptcha();
@@ -108,7 +113,7 @@ page notifies user as soon as results are present
       
       var showRecaptcha = (function(){
         Recaptcha.create("6Ld4iQsAAAAAAM3nfX_K0vXaUudl2Gk0lpTF3REf", //FIXME: insert correct key
-                         this.captcha.get(0), {
+                         this.captcha, {
                            theme: "white",
                            callback: Recaptcha.focus_response_field
                          });
@@ -124,30 +129,30 @@ page notifies user as soon as results are present
     submit: function(){
       $.post("/api/analyze", this.$element.serialize(), "json").then((function(data){
         if(!data.success && this.$element.serialize().indexOf("foo") === -1) { //FIXME Debug
-          this.captchaError.slideDown("fast");
+          this.$captchaError.slideDown("fast");
           Recaptcha.reload();
         } else {
-          main.children().slideUp().promise().done(function(){
+          this.$parentNode.children().slideUp().promise().done(function(){
             $(this).remove();
           });
-          new QueueHandler(main, {}, data.success ? data : {id:"abc",queue:6}); //FIXME Debug
+          new QueueHandler(this.$parentNode, {}, data.success ? data : {id:"abc",queue:6}); //FIXME Debug
         }
       }).bind(this));
       return false;
     }
   });
 
-  var ShareWidget = function(node,options){
-    this.initialize(options);
+  var ShareWidget = exports.ShareWidget = function(node,options){
+    this.initialize(arguments);
 
-    $(node).append(this.$element);
+    this.$parentNode.append(this.$element);
 
     this.$element.on("click",".share-open",function(){
       window.open(this.href,'', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
       return false;
     });
     
-    this.urlCopyInput
+    this.$urlCopyInput
       .click(function(){
         $(this).select();
       })
@@ -158,11 +163,11 @@ page notifies user as soon as results are present
     defaults: {text: "Share:", url: "http://example.com"}
   });
   
-  var QueueHandler = function(node,options,firstData){
-    this.id = _.escape(firstData.id);
-    this.initialize(options);
+  var QueueHandler = exports.QueueHandler = function(node,options,firstData){
+    this.initialize(arguments);
+    this.id = firstData ? firstData.id || options.id : options.id;
     
-    this.initGui(node);
+    this.initGui(this.$parentNode);
     
     
     if(firstData)
@@ -179,15 +184,14 @@ page notifies user as soon as results are present
   	  var url = "/analysis/"+this.id;
       //hide existing content
     
-      new ShareWidget(this.$element.find(".share"),
+      new ShareWidget(this.$shareWidget,
                       {text: "Share analysis:",
                        url: location.host + url});
     
-      this.$notifyButton = this.$element.find("button.notify");
       this.$notifyButton.click(this.notifyClick.bind(this));
     
       this.$element.hide();
-      $(node).append(this.$element);
+      this.$parentNode.append(this.$element);
       this.$element.slideDown();
       
       notifySound.load();
@@ -201,7 +205,7 @@ page notifies user as soon as results are present
       if(data.complete) {
         window.clearInterval(this.pollStatusInterval);
         this.notify();
-        main.children().slideUp().promise().done(function(){
+        this.$parentNode.children().slideUp().promise().done(function(){
           $(this).remove();
         });
         console.log("FIXME: Show results");
@@ -211,11 +215,12 @@ page notifies user as soon as results are present
       }
     },
     setQueueNumber: function(no){
-      this.$element.find(".queue-position").text(no);
+      this.$queuePosition.text(no);
     },
     notify: function(){
       if(!this.$notifyButton.hasClass("active"))
         return;
+      notifySound.stop();
       notifySound.play();
     },
     notifyClick: function(){
@@ -227,3 +232,5 @@ page notifies user as soon as results are present
       }
     }
   });
+  
+})(jQuery);

@@ -93,12 +93,12 @@
         <i class="icon-tasks" style="font-size: 42px"></i>
       </a>
       <div class="media-body">
-        <h4 class="media-heading">Your request is currently in the queue at position <b class="queue-position">#…</b>.</h4>
+        <h4 class="media-heading">Your request is currently in the queue at position <b data-attach="queuePosition">#…</b>.</h4>
         Go and grab some coffee, this page refreshes automatically.
       </div>
     </div>
-    <div class=share></div>
-    <button data-toggle="button" type="submit" class="notify btn btn-primary btn-block"><i class="icon-bullhorn"></i> Notify me!</button>
+    <div data-attach="shareWidget"></div>
+    <button data-attach="notifyButton" data-toggle="button" type="submit" class="notify btn btn-primary btn-block"><i class="icon-bullhorn"></i> Notify me!</button>
     <div class=clearfix></div>
   </div>
 </script>
@@ -122,7 +122,9 @@
 <script src="/static/js/vendor/lodash.custom.js"></script>  
 <script src="/static/js/main.js"></script>
 <script type="text/javascript">
-  new MainView(main);
+  $(function(){
+    new thugme.MainView("#main");
+  });
 </script>
 {% block content %}{% endblock %}
   
