@@ -35,6 +35,14 @@ a:hover {
   text-decoration: none;
 }
 
+.table-analysis {
+  table-layout: fixed;
+}
+.table-analysis td {
+  overflow: hidden;
+  text-overflow:ellipsis;
+  white-space: nowrap;
+}
 
 
 /* Share Widget */

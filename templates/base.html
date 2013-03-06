@@ -48,11 +48,32 @@
       </div>
     </form>
     <h4>Recent Analysis</h4>
-    <div class="analysis-table" data-attach="analysisTable">
-      Use "foo" for captcha bypass.<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-      analysis content<br>analysis content<br>analysis content<br>analysis content<br>analysis content<br>
-    </div>
+    <table class="table table-striped table-condensed table-analysis" data-attach="analysisTable">
+      <thead>
+        <tr>
+          <th style="width:50%">URL</th>
+          <th style="width:25%">Results</th>
+          <th style="width:25%">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td title="http://example.com?fjyzaa=1l:1k:1k:1m:2w&gia=37:33:3g:2v&hnmv=1j:33:32:1l:1g:1i:1o:1n:1o:1i&negwrj=dpnf"><span class="muted">http://</span>example.com?fjyzaa=1l:1k:1k:1m:2w&gia=37:33:3g:2v&hnmv=1j:33:32:1l:1g:1i:1o:1n:1o:1i&negwrj=dpnf</td>
+          <td><span class="label">PDF</span> <span class="label">SWF</span></td>
+          <td>2013-03-04 03:25:48 PST</td>
+        </tr>
+        <tr>
+          <td><span class="muted">http://</span>foo.com/bar</td>
+          <td><span class="label label-important">JAR</span> <span class="label">SWF</span></td>
+          <td>2013-03-04 00:23:50 PST</td>
+        </tr>
+        <tr>
+          <td title="O RLY?">Bypass the Captchacheck with "foo" as Captcha value</td>
+          <td></td>
+          <td>2013-03-03 23:00:45 PST</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </script> 
 <script id="submittpl" type="text/template">

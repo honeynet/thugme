@@ -112,7 +112,7 @@ page notifies user as soon as results are present
       //Lazy-load Recaptcha
       
       var showRecaptcha = (function(){
-        Recaptcha.create("6Ld4iQsAAAAAAM3nfX_K0vXaUudl2Gk0lpTF3REf", //FIXME: insert correct key
+        Recaptcha.create("6LcYzt0SAAAAAMG60o7oeNa9AZ_BYz0fAgc64Pu4", //FIXME: insert correct key
                          this.captcha, {
                            theme: "white",
                            callback: Recaptcha.focus_response_field
